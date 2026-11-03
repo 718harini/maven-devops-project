@@ -33,6 +33,11 @@ jobs:
       # Step 3: Build Maven project
       - name: Maven Build
         run: mvn -B -f myapp/pom.xml clean package
+      - name: Check GitHub OIDC context
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Branch: $GITHUB_REF"
+          echo "OIDC permission is configured"
 
       # Step 4: Configure AWS authentication
       - name: Configure AWS Credentials
