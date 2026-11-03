@@ -1,0 +1,53 @@
+
+name: Maven Build and S3 Upload
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get source code
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install Java
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: myapp/pom.xml
+
+      # Step 3: Build Maven project
+      - name: Maven Build
+        run: mvn -B -f myapp/pom.xml clean package
+
+      # Step 4: Configure AWS authentication
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      # Step 5: Upload JAR to S3
+      - name: Upload JAR to S3
+        run: |
+          aws s3 cp \
+            myapp/target/myapp-1.0-SNAPSHOT.jar \
+            s3://maven-devops-artifacts-718harini-2026/myapp-${{ github.sha }}.jar
+
+          aws s3 cp \
+            myapp/target/myapp-1.0-SNAPSHOT.jar \
+            s3://maven-devops-artifacts-718harini-2026/myapp-latest.jar
