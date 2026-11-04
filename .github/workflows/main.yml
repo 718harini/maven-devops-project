@@ -44,6 +44,12 @@ jobs:
       # Step 5: Verify generated JAR
       - name: Check JAR File
         run: ls -lh myapp/target/*.jar
+      - name: Debug GitHub Identity
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Branch: $GITHUB_REF"
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Actor: $GITHUB_ACTOR"
 
       # Step 6: Configure AWS credentials using OIDC
       - name: Configure AWS Credentials
