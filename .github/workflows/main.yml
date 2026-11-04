@@ -1,3 +1,4 @@
+
 name: Maven Build and S3 Upload
 
 on:
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # Step 1: Checkout source code
       - name: Checkout GitHub Repository
         uses: actions/checkout@v4
@@ -29,37 +31,43 @@ jobs:
           cache: maven
           cache-dependency-path: myapp/pom.xml
 
-      # Step 3: Build Maven project
+      # Step 3: Verify Java and Maven
+      - name: Check Java and Maven
+        run: |
+          java -version
+          mvn -version
+
+      # Step 4: Build Maven project
       - name: Maven Build
         run: mvn -B -f myapp/pom.xml clean package
 
-      # Step 4: Debug GitHub context
-      - name: Debug GitHub Context
-        run: |
-          echo "Repository: $GITHUB_REPOSITORY"
-          echo "Branch: $GITHUB_REF"
-          echo "Event: $GITHUB_EVENT_NAME"
-          echo "OIDC URL present: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL != '' }}"
+      # Step 5: Verify generated JAR
+      - name: Check JAR File
+        run: ls -lh myapp/target/*.jar
 
-      # Step 5: Configure AWS credentials
+      # Step 6: Configure AWS credentials using OIDC
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::138420161291:role/test
-          aws-region: ap-south-1
+          role-to-assume: arn:aws:iam::138420161291:role/github-actions-maven-role
+          aws-region: us-east-1
           role-session-name: GitHubActionsSession
 
-      # Step 6: Verify AWS identity
+      # Step 7: Verify AWS identity
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
 
-      # Step 7: Upload JAR to S3
+      # Step 8: Upload versioned JAR to S3
       - name: Upload JAR to S3
         run: |
           aws s3 cp \
             myapp/target/myapp-1.0-SNAPSHOT.jar \
-            s3://maven-devops-artifacts-718harini-2026/myapp-${{ github.sha }}.jar
+            s3://maven-devops-artifacts-718harini/myapp-${{ github.sha }}.jar
 
+      # Step 9: Upload latest JAR to S3
+      - name: Upload Latest JAR
+        run: |
           aws s3 cp \
             myapp/target/myapp-1.0-SNAPSHOT.jar \
-            s3://maven-devops-artifacts-718harini-2026/myapp-latest.jar
+            s3://maven-devops-artifacts-718harini/myapp-latest.jar
+
